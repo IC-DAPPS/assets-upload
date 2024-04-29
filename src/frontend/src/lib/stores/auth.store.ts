@@ -4,11 +4,14 @@ import { writable, type Readable } from 'svelte/store';
 import { AuthClient } from '@dfinity/auth-client';
 import { getActor } from '../actor';
 import { goto } from '$app/navigation';
+import { AssetManager } from '@dfinity/assets';
+import { getAssetManager } from '$lib/assetManager';
 
 export interface AuthStoreData {
 	isAuthenticated: boolean;
 	identity: Identity;
 	actor: ActorSubclass<_SERVICE>;
+	assetManager: AssetManager;
 }
 
 export interface AuthStore extends Readable<AuthStoreData> {
@@ -21,12 +24,14 @@ let authClient: AuthClient | null | undefined;
 
 const anonIdentity = new AnonymousIdentity();
 const anonActor: ActorSubclass<_SERVICE> = await getActor(anonIdentity);
+const anonAssetManager: AssetManager = await getAssetManager(anonIdentity);
 
 const init = async (): Promise<AuthStore> => {
 	const { subscribe, set } = writable<AuthStoreData>({
 		isAuthenticated: false,
 		identity: new AnonymousIdentity(),
-		actor: anonActor
+		actor: anonActor,
+		assetManager: anonAssetManager
 	});
 
 	return {
@@ -42,10 +47,16 @@ const init = async (): Promise<AuthStore> => {
 				return set({
 					isAuthenticated,
 					identity: signIdentity,
-					actor: authActor
+					actor: authActor,
+					assetManager: await getAssetManager(signIdentity)
 				});
 			}
-			return set({ isAuthenticated, identity: anonIdentity, actor: anonActor });
+			return set({
+				isAuthenticated,
+				identity: anonIdentity,
+				actor: anonActor,
+				assetManager: anonAssetManager
+			});
 		},
 		signIn: async () =>
 			new Promise<void>(async (resolve, reject) => {
@@ -73,7 +84,12 @@ const init = async (): Promise<AuthStore> => {
 			// This fix a "sign in -> sign out -> sign in again" flow without window reload.
 			authClient = null;
 
-			set({ isAuthenticated: false, identity: anonIdentity, actor: anonActor });
+			set({
+				isAuthenticated: false,
+				identity: anonIdentity,
+				actor: anonActor,
+				assetManager: anonAssetManager
+			});
 		}
 	};
 };
