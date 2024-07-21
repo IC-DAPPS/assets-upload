@@ -1,4 +1,8 @@
-# create-svelte
+# Asset Upload
+This is an example repo about how you can upload assets to a Asset Canister.
+
+
+## create-svelte
 
 Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
 
